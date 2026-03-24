@@ -1,0 +1,161 @@
+--[[ 
+    SLPN CHEATS BY KENSHI | V2.2
+    Zakres: 4.00 - 20.00 (Start: 4.00) | Step 0.25
+]]
+
+local player = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+-- Parametry startowe (Zmienione na 4.00)
+local XZ_Val = 4.00
+local Y_Val = 4.00
+local step = 0.25
+local min, max = 4.00, 20.00
+
+-- Ładowanie Hitboxów (Zabezpieczone)
+local hitBox = nil
+pcall(function()
+    hitBox = require(game:GetService("ReplicatedStorage").SharedModules.Hitbox.HitboxPresets)
+end)
+
+-- Wizualizator
+local visual = Instance.new("BoxHandleAdornment")
+visual.Name = "KenshiVisualizerV2"
+visual.Transparency = 0.6
+visual.Color3 = Color3.fromRGB(0, 255, 150)
+visual.AlwaysOnTop = true
+visual.Visible = false
+
+local function update()
+    if hitBox then
+        for _, config in pairs(hitBox) do
+            config.Size = Vector3.new(XZ_Val, Y_Val, XZ_Val)
+        end
+    end
+    
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        visual.Adornee = char.HumanoidRootPart
+        visual.Size = Vector3.new(XZ_Val, Y_Val, XZ_Val)
+        visual.Parent = char
+    end
+end
+
+-- GUI
+local sg = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+sg.Name = "Kenshi_SLPN_V2"
+sg.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", sg)
+frame.Size = UDim2.new(0, 280, 0, 230)
+frame.Position = UDim2.new(0.5, -140, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+frame.Visible = false
+frame.Draggable = true
+frame.Active = true
+Instance.new("UICorner", frame)
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(0, 255, 150)
+stroke.Thickness = 2
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.Text = "SLPN CHEATS BY KENSHI V2"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+
+-- Funkcja suwaków
+local function createSlider(name, pos, currentVal, callback)
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Position = pos
+    label.Text = name .. ": " .. string.format("%.2f", currentVal)
+    label.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+
+    local bg = Instance.new("Frame", frame)
+    bg.Size = UDim2.new(0, 220, 0, 4)
+    bg.Position = pos + UDim2.new(0.5, -110, 0, 25)
+    bg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", bg)
+
+    local fill = Instance.new("Frame", bg)
+    fill.Size = UDim2.new((currentVal - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+    Instance.new("UICorner", fill)
+
+    local btn = Instance.new("TextButton", bg)
+    btn.Size = UDim2.new(0, 16, 0, 16)
+    btn.Position = UDim2.new((currentVal - min) / (max - min), -8, 0.5, -8)
+    btn.Text = ""
+    btn.BackgroundColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+
+    local dragging = false
+    btn.MouseButton1Down:Connect(function() dragging = true end)
+    
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local rel = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            local rawVal = min + (max - min) * rel
+            local steppedVal = math.floor(rawVal / step + 0.5) * step
+            steppedVal = math.clamp(steppedVal, min, max)
+            
+            local finalRel = (steppedVal - min) / (max - min)
+            fill.Size = UDim2.new(finalRel, 0, 1, 0)
+            btn.Position = UDim2.new(finalRel, -8, 0.5, -8)
+            label.Text = name .. ": " .. string.format("%.2f", steppedVal)
+            
+            callback(steppedVal)
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+end
+
+-- Inicjalizacja suwaków (z wartością 4.00)
+createSlider("WIDTH XZ", UDim2.new(0, 0, 0, 45), XZ_Val, function(v) XZ_Val = v update() end)
+createSlider("HEIGHT Y", UDim2.new(0, 0, 0, 100), Y_Val, function(v) Y_Val = v update() end)
+
+--- PANIC BUTTON ---
+local panicBtn = Instance.new("TextButton", frame)
+panicBtn.Size = UDim2.new(0, 220, 0, 35)
+panicBtn.Position = UDim2.new(0.5, -110, 0, 165)
+panicBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+panicBtn.Text = "PANIC - UNLOAD ALL"
+panicBtn.TextColor3 = Color3.new(1, 1, 1)
+panicBtn.Font = Enum.Font.GothamBold
+panicBtn.TextSize = 12
+Instance.new("UICorner", panicBtn)
+
+local toggleConnection
+
+panicBtn.MouseButton1Click:Connect(function()
+    -- Reset do 4.00 (zamiast 1.00)
+    if hitBox then
+        for _, config in pairs(hitBox) do
+            config.Size = Vector3.new(4, 4, 4)
+        end
+    end
+    
+    if toggleConnection then toggleConnection:Disconnect() end
+    visual:Destroy()
+    sg:Destroy()
+end)
+
+toggleConnection = UIS.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
+        local state = not frame.Visible
+        frame.Visible = state
+        visual.Visible = state
+    end
+end)
+
+-- Pierwsza aktualizacja po uruchomieniu
+update()
